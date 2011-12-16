@@ -21,4 +21,10 @@ describe FeatureSet::FeatureBuilder::WordVector do
     builder.generate_features(wrapped_dataset.last[:m1], :m1, wrapped_dataset.last).should == { "hello" => 0, "world" => (1/2.0) * Math.log(2/2.0), "foo" => (1/2.0) * Math.log(2/1.0) }
     builder.generate_features(wrapped_dataset.last[:m2], :m2, wrapped_dataset.last).should == { "how" => (1/1.0) * Math.log(2/2.0), "goes" => 0 }
   end
+
+  it "should ignore non-string features" do
+    builder = FeatureSet::FeatureBuilder::WordVector.new
+    builder.before_generate_features([{ :something => FeatureSet::Datum.new(2), :class => false }, { :something => FeatureSet::Datum.new(1), :class => true }])
+    builder.generate_features(FeatureSet::Datum.new(2), :something, { :something => FeatureSet::Datum.new(2), :class => false }).should == {}
+  end
 end

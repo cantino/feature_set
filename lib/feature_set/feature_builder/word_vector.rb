@@ -32,6 +32,7 @@ module FeatureSet
         end
         
         def generate_features(datum, key, row)
+          return {} unless datum.value.is_a?(String)
           num_words = datum.tokens.length.to_f
           idfs[key].inject({}) do |memo, (word, idf)|
             memo[word] = ((datum.token_counts[word] || 0) / num_words) * idf
