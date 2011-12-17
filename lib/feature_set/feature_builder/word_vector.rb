@@ -26,8 +26,8 @@ module FeatureSet
         
         num_docs = dataset.length
         STDERR.puts "Done building df counts.  The dataset has #{num_docs} documents."
-        pruned = 0
         idfs.each do |feature, freqs|
+          pruned = 0
           new_freqs = {}
           freqs.each do |key, value|
             log = Math.log(num_docs / value.to_f)
@@ -38,8 +38,8 @@ module FeatureSet
             end
           end
           idfs[feature] = new_freqs
+          STDERR.puts "Done calculating idfs for #{feature}.  Pruned #{pruned} rare values, leaving #{idfs[feature].length} values."
         end
-        STDERR.puts "Done calculating idfs.  Pruned #{pruned} rare values."
       end
       
       def generate_features(datum, key, row)

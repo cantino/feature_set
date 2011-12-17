@@ -71,7 +71,9 @@ module FeatureSet
         
         row.each do |key, datum|
           (output_row[:class] = datum) and next if key == :class
-          output_row[key] = datum.value if opts[:include_original]
+          if opts[:include_original] && (opts[:include_original].is_a?(TrueClass) || ![opts[:include_original][:except]].flatten.include?(key))
+            output_row[key] = datum.value
+          end
 
           feature_builders.each do |builder|
             builder.generate_features(datum, key, row).each do |feature, value|

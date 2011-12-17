@@ -75,17 +75,24 @@ describe FeatureSet::Builder do
       @builder.generate_features_for([{ :status => "is this shitty text?" }, { :status => "foo bar" }]).should == [{ :status_cuss_count => 1 }, { :status_cuss_count => 0 }]
       @builder.features.length.should == num_features
     end
+  end
 
-    describe "outputing an ARFF file" do
-      it "should return a rarff relation object" do
-        @builder.generate_features
-        arff = @builder.arff
-        arff.should be_a(Rarff::Relation)
-        arff.attributes.first.name.should == "status_cuss_count"
-        arff.attributes.last.name.should == "class"
-        arff.to_s.should =~ /Data/
-        arff.to_s.should =~ /status_cuss_count/
-      end
+  describe "outputing an ARFF file" do
+    before do
+      @builder = FeatureSet::Builder.new
+      @builder.add_feature_builder FeatureSet::FeatureBuilder::Cuss.new
+      @builder.add_data :status => "this is some text", :foo => true, :class => :awesome
+      @builder.add_data :status => "this is some shitty text", :foo => false, :class => :less_awesome
+    end
+
+    it "should return a rarff relation object" do
+      @builder.generate_features(:include_original => { :except => :status })
+      arff = @builder.arff
+      arff.should be_a(Rarff::Relation)
+      arff.attributes.map(&:name).should =~ ["status_cuss_count", "class", "foo"]
+      arff.attributes.last.name.should == "class"
+      arff.to_s.should =~ /Data/
+      arff.to_s.should =~ /status_cuss_count/
     end
   end
 end
