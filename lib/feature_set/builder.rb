@@ -70,7 +70,11 @@ module FeatureSet
         output_row = {}
         
         row.each do |key, datum|
-          (output_row[:class] = datum) and next if key == :class
+          if key == :class
+            output_row[:class] = datum
+            next
+          end
+          
           if opts[:include_original] && (opts[:include_original].is_a?(TrueClass) || ![opts[:include_original][:except]].flatten.include?(key))
             output_row[key] = datum.value
           end
