@@ -22,13 +22,11 @@ module FeatureSet
     end
     
     def add_data(data)
-      clear_features
       (@data << data).flatten!
     end
     
     def clear_data
       @data = []
-      clear_features
     end
     
     def clear_features
