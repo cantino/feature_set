@@ -27,4 +27,15 @@ describe FeatureSet::FeatureBuilder::WordVector do
     builder.before_generate_features([{ :something => FeatureSet::Datum.new(2), :class => false }, { :something => FeatureSet::Datum.new(1), :class => true }])
     builder.generate_features(FeatureSet::Datum.new(2), :something, { :something => FeatureSet::Datum.new(2), :class => false }).should == {}
   end
+  
+  it "should allow specifying the idf cutoff" do
+    builder = FeatureSet::FeatureBuilder::WordVector.new(:idf_cutoff => 2.0)
+    dataset = [{ :m1 => "hello world.  hello!", :class => true }] * 10
+    dataset <<  { :m1 => "foo", :class => false }
+    wrapped_dataset = FeatureSet::Builder.wrap_dataset(dataset)
+    builder.before_generate_features(wrapped_dataset)
+    builder.idfs.should == {
+                             :m1 => { "hello" => Math.log(11/10.0), "world" => Math.log(11/10.0) }
+                           }
+  end
 end

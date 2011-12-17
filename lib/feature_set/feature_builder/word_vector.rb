@@ -25,13 +25,14 @@ module FeatureSet
         end
         
         num_docs = dataset.length
+        idf_cutoff = (options[:idf_cutoff] || 6).to_f
         STDERR.puts "Done building df counts.  The dataset has #{num_docs} documents."
         idfs.each do |feature, freqs|
           pruned = 0
           new_freqs = {}
           freqs.each do |key, value|
             log = Math.log(num_docs / value.to_f)
-            if log < 6.0
+            if log < idf_cutoff
               new_freqs[key] = log
             else
               pruned += 1
