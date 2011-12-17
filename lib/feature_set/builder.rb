@@ -56,11 +56,17 @@ module FeatureSet
     end
     
     def generate_features(opts = {})
-      wrapped_data_set = self.class.wrap_dataset(data)
+      wrapped_data = self.class.wrap_dataset(data)
+      feature_builders.each {|fb| fb.before_generate_features(wrapped_data) }
+      @features = generate_features_for(wrapped_data, opts.merge(:already_wrapped => true))
+    end
 
-      feature_builders.each {|fb| fb.before_generate_features(wrapped_data_set) }
-      
-      @features = wrapped_data_set.map do |row|
+    def generate_features_for(data, opts = {})
+      # FYI, we explicitly do not call before_generate_features because this can be used on unknown rows for classification, and
+      # we want our feature generators to keep any cached data from the previous 'generate_features' feature building call.  This is
+      # important for Wordvector, for example, since it needs to build the idf mappings beforehand and we want them used on any new data.
+      wrapped_data = opts[:already_wrapped] ? data : self.class.wrap_dataset(data)
+      wrapped_data.map do |row|
         output_row = {}
         
         row.each do |key, datum|
@@ -77,7 +83,7 @@ module FeatureSet
         output_row
       end
     end
-    
+
     def add_feature_builders(*builders)
       builders = BUILTIN_FEATURE_BUILDERS.map(&:new) if [:all, "all"].include?(builders.first)
       (@feature_builders << builders).flatten!

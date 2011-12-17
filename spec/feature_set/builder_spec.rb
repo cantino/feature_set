@@ -69,6 +69,13 @@ describe FeatureSet::Builder do
       @builder.features[2].should == { :status_cuss_count => 0, :foo_cuss_count => 1, :class => :awesome }
     end
 
+    it "should allow generation of features on new data while leaving the old data intact" do
+      @builder.generate_features
+      num_features = @builder.features.length
+      @builder.generate_features_for([{ :status => "is this shitty text?" }, { :status => "foo bar" }]).should == [{ :status_cuss_count => 1 }, { :status_cuss_count => 0 }]
+      @builder.features.length.should == num_features
+    end
+
     describe "outputing an ARFF file" do
       it "should return a rarff relation object" do
         @builder.generate_features
