@@ -11,10 +11,11 @@ module FeatureSet
     BUILTIN_FEATURE_BUILDERS = %w[FeatureSet::FeatureBuilder::Cuss 
                                   FeatureSet::FeatureBuilder::WordVector].map(&:constantize)
 
-    attr_accessor :options, :feature_builders, :data, :features
+    attr_accessor :options, :feature_builders, :data, :features, :name
 
     def initialize(options = {})
       @options = options
+      @name = options[:name]
       @feature_builders = []
       @features = []
       @data = []
@@ -32,6 +33,28 @@ module FeatureSet
     
     def clear_features
       @features = []
+    end
+
+    def arff
+      relation = Rarff::Relation.new(name || 'Data')
+      keys = features.first.keys
+      instances = features.map do |row|
+        keys.map do |key|
+          value = row[key]
+          if value.is_a?(String)
+            value.gsub(/\\/, "\\\\\\\\").gsub(/"/, "\\\\\"").gsub(/'/, '\\\\\'')
+          elsif value.is_a?(Symbol)
+            value.to_s
+          else
+            value
+          end
+        end
+      end
+      relation.instances = instances
+      keys.each_with_index do |key, index|
+        relation.attributes[index].name = key.to_s
+      end
+      relation
     end
     
     def generate_features(opts = {})

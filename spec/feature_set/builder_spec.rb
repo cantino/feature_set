@@ -68,5 +68,17 @@ describe FeatureSet::Builder do
       @builder.features[1].should == { :status_cuss_count => 1, :class => :less_awesome }
       @builder.features[2].should == { :status_cuss_count => 0, :foo_cuss_count => 1, :class => :awesome }
     end
+
+    describe "outputing an ARFF file" do
+      it "should return a rarff relation object" do
+        @builder.generate_features
+        arff = @builder.arff
+        arff.should be_a(Rarff::Relation)
+        arff.attributes.first.name.should == "status_cuss_count"
+        arff.attributes.last.name.should == "class"
+        arff.to_s.should =~ /Data/
+        arff.to_s.should =~ /status_cuss_count/
+      end
+    end
   end
 end
