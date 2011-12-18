@@ -43,10 +43,23 @@ describe FeatureSet::FeatureBuilder::WordVector do
     builder = FeatureSet::FeatureBuilder::WordVector.new(:word_limit => 2)
     dataset = [{ :m1 => "hello world.  hello!", :class => true }] * 10
     dataset <<  { :m1 => "foo", :class => false }
+    dataset <<  { :m1 => "hello", :class => false }
+    dataset <<  { :m1 => "hello", :class => false }
     wrapped_dataset = FeatureSet::Builder.wrap_dataset(dataset)
     builder.before_generate_features(wrapped_dataset)
     builder.idfs.should == {
-                             :m1 => { "hello" => Math.log(11/10.0), "world" => Math.log(11/10.0) }
+                             :m1 => { "hello" => Math.log(13/12.0), "world" => Math.log(13/10.0) }
+                           }
+
+    builder = FeatureSet::FeatureBuilder::WordVector.new(:word_limit => 1)
+    dataset = [{ :m1 => "hello world.  hello!", :class => true }] * 10
+    dataset <<  { :m1 => "foo", :class => false }
+    dataset <<  { :m1 => "world", :class => false }
+    dataset <<  { :m1 => "world", :class => false }
+    wrapped_dataset = FeatureSet::Builder.wrap_dataset(dataset)
+    builder.before_generate_features(wrapped_dataset)
+    builder.idfs.should == {
+                             :m1 => { "world" => Math.log(13/12.0) }
                            }
   end
 end
