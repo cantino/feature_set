@@ -63,7 +63,7 @@ module FeatureSet
       keys = features.first.keys
       io.puts "@RELATION Data"
       keys.each do |key|
-        io.puts "@ATTRIBUTE #{key} NUMERIC"
+        io.puts "@ATTRIBUTE #{key} NUMERIC" unless key == :class
       end
       io.puts "@ATTRIBUTE class {false,true}"
       io.puts "@DATA"

@@ -103,7 +103,9 @@ describe FeatureSet::Builder do
         io = StringIO.new
         @builder.output_numeric_arff(io)
         io.rewind
-        io.read.should =~ /@ATTRIBUTE status_cuss_count NUMERIC/
+        str = io.read
+        str.should =~ /@ATTRIBUTE status_cuss_count NUMERIC/
+        str.scan(/@ATTRIBUTE class /).length.should == 1
       end
     end
   end
