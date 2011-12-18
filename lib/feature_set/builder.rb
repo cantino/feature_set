@@ -68,7 +68,7 @@ module FeatureSet
       # we want our feature generators to keep any cached data from the previous 'generate_features' feature building call.  This is
       # important for Wordvector, for example, since it needs to build the idf mappings beforehand and we want them used on any new data.
       wrapped_data = opts[:already_wrapped] ? data : self.class.wrap_dataset(data)
-      wrapped_data.map do |row|
+      wrapped_data.map.with_index do |row, index|
         output_row = {}
         
         row.each do |key, datum|
@@ -86,6 +86,10 @@ module FeatureSet
               output_row["#{key}_#{feature}".to_sym] = value
             end
           end
+        end
+        
+        if index % 10 == 0
+          STDERR.print "."; STDERR.flush
         end
         
         output_row
