@@ -3,12 +3,14 @@ require 'active_support/inflector'
 
 require "feature_set/feature_builder/word_vector"
 require "feature_set/feature_builder/cuss"
+require "feature_set/feature_builder/emoticon"
 
 require "feature_set/datum"
 
 module FeatureSet
   class Builder
     BUILTIN_FEATURE_BUILDERS = %w[FeatureSet::FeatureBuilder::Cuss 
+                                  FeatureSet::FeatureBuilder::Emoticon
                                   FeatureSet::FeatureBuilder::WordVector].map(&:constantize)
 
     attr_accessor :options, :feature_builders, :data, :features, :name
