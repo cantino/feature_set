@@ -81,18 +81,30 @@ describe FeatureSet::Builder do
     before do
       @builder = FeatureSet::Builder.new
       @builder.add_feature_builder FeatureSet::FeatureBuilder::Cuss.new
-      @builder.add_data :status => "this is some text", :foo => true, :class => :awesome
-      @builder.add_data :status => "this is some shitty text", :foo => false, :class => :less_awesome
+      @builder.add_data :status => "this is some text", :foo => 2, :class => :awesome
+      @builder.add_data :status => "this is some shitty text", :foo => 5, :class => :less_awesome
     end
 
-    it "should return a rarff relation object" do
-      @builder.generate_features(:include_original => { :except => :status })
-      arff = @builder.arff
-      arff.should be_a(Rarff::Relation)
-      arff.attributes.map(&:name).should =~ ["status_cuss_count", "class", "foo"]
-      arff.attributes.last.name.should == "class"
-      arff.to_s.should =~ /Data/
-      arff.to_s.should =~ /status_cuss_count/
+    describe "as an rarff relation" do
+      it "should return a rarff relation object" do
+        @builder.generate_features(:include_original => { :except => :status })
+        arff = @builder.to_rarff
+        arff.should be_a(Rarff::Relation)
+        arff.attributes.map(&:name).should =~ ["status_cuss_count", "class", "foo"]
+        arff.attributes.last.name.should == "class"
+        arff.to_s.should =~ /Data/
+        arff.to_s.should =~ /status_cuss_count/
+      end
+    end
+    
+    describe "as a numeric arff" do
+      it "should output an arff to an IO object" do
+        @builder.generate_features(:include_original => { :except => :status })
+        io = StringIO.new
+        @builder.output_numeric_arff(io)
+        io.rewind
+        io.read.should =~ /@ATTRIBUTE status_cuss_count NUMERIC/
+      end
     end
   end
 end

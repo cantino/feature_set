@@ -35,7 +35,7 @@ module FeatureSet
       @features = []
     end
 
-    def arff
+    def to_rarff
       relation = Rarff::Relation.new(name || 'Data')
       keys = features.first.keys
       instances = features.map do |row|
@@ -55,6 +55,21 @@ module FeatureSet
         relation.attributes[index].name = key.to_s
       end
       relation
+    end
+    
+    # This only knows how to output arfs with true/false classes and all numeric attributes.
+    # Additionally, every row must have the same attributes.
+    def output_numeric_arff(io)
+      keys = features.first.keys
+      io.puts "@RELATION Data"
+      keys.each do |key|
+        io.puts "@ATTRIBUTE #{key} NUMERIC"
+      end
+      io.puts "@ATTRIBUTE class {false,true}"
+      io.puts "@DATA"
+      features.each do |feature|
+        io.puts keys.map { |k| k == :class ? feature[k].to_s : feature[k].to_f }.join(",")
+      end
     end
     
     def generate_features(opts = {})
