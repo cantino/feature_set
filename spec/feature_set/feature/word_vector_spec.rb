@@ -38,4 +38,15 @@ describe FeatureSet::FeatureBuilder::WordVector do
                              :m1 => { "hello" => Math.log(11/10.0), "world" => Math.log(11/10.0) }
                            }
   end
+  
+  it "should allow specifying an word-count threshold" do
+    builder = FeatureSet::FeatureBuilder::WordVector.new(:word_limit => 2)
+    dataset = [{ :m1 => "hello world.  hello!", :class => true }] * 10
+    dataset <<  { :m1 => "foo", :class => false }
+    wrapped_dataset = FeatureSet::Builder.wrap_dataset(dataset)
+    builder.before_generate_features(wrapped_dataset)
+    builder.idfs.should == {
+                             :m1 => { "hello" => Math.log(11/10.0), "world" => Math.log(11/10.0) }
+                           }
+  end
 end

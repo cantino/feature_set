@@ -25,7 +25,8 @@ module FeatureSet
         end
         
         num_docs = dataset.length
-        idf_cutoff = (options[:idf_cutoff] || 6).to_f
+        idf_cutoff = (options[:idf_cutoff] || 7).to_f
+        word_limit = options[:word_limit] || 1000000
         STDERR.puts "Done building df counts.  The dataset has #{num_docs} documents."
         idfs.each do |feature, freqs|
           pruned = 0
@@ -37,6 +38,9 @@ module FeatureSet
             else
               pruned += 1
             end
+          end
+          if options[:word_limit]
+            new_freqs = new_freqs.to_a.sort {|a, b| a.last <=> b.last }[0...word_limit].inject({}) { |m, (k, v)| m[k] = v; m }
           end
           idfs[feature] = new_freqs
           STDERR.puts "Done calculating idfs for #{feature}.  Pruned #{pruned} rare values, leaving #{idfs[feature].length} values."
