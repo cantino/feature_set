@@ -5,6 +5,10 @@ module FeatureSet
     class WordVector < Base
       attr_accessor :idfs
 
+      # Options:
+      #   :tf_only => true|false, default is false
+      #   :idf_cutiff => <cutoff>, default is 10
+      #   :word_limit => <word limit>, default is 2000
       def initialize(options = {})
         super
       end
@@ -25,22 +29,32 @@ module FeatureSet
         end
         
         num_docs = dataset.length
-        idf_cutoff = (options[:idf_cutoff] || 7).to_f
-        word_limit = options[:word_limit] || 1000000
+        idf_cutoff = (options[:idf_cutoff] || 10).to_f
+        word_limit = options[:word_limit] || 2000
         STDERR.puts "Done building df counts.  The dataset has #{num_docs} documents."
+
         idfs.each do |feature, freqs|
           pruned = 0
-          new_freqs = {}
-          freqs.each do |key, value|
-            log = Math.log(num_docs / value.to_f)
-            if log < idf_cutoff
-              new_freqs[key] = log
-            else
-              pruned += 1
+          if options[:tf_only]
+            new_freqs = freqs
+          else
+            new_freqs = {}
+            freqs.each do |key, value|
+              log = Math.log(num_docs / value.to_f)
+              if log < idf_cutoff
+                new_freqs[key] = log
+              else
+                pruned += 1
+              end
             end
           end
           if options[:word_limit]
-            new_freqs = new_freqs.to_a.sort {|a, b| a.last <=> b.last }[0...word_limit].inject({}) { |m, (k, v)| m[k] = v; m }
+            new_freqs = if options[:tf_only]
+                          new_freqs.to_a.sort {|a, b| b.last <=> a.last }
+                        else
+                          new_freqs.to_a.sort {|a, b| a.last <=> b.last }
+                        end
+            new_freqs = new_freqs[0...word_limit].inject({}) { |m, (k, v)| m[k] = v; m }
           end
           idfs[feature] = new_freqs
           STDERR.puts "Done calculating idfs for #{feature}.  Pruned #{pruned} rare values, leaving #{idfs[feature].length} values."
@@ -50,9 +64,16 @@ module FeatureSet
       def build_features(datum, key, row)
         return {} unless datum.value.is_a?(String)
         num_words = datum.tokens.length.to_f
-        idfs[key].inject({}) do |memo, (word, idf)|
-          memo["wv_#{word}"] = ((datum.token_counts[word] || 0) / num_words) * idf
-          memo
+        if options[:tf_only]
+          idfs[key].inject({}) do |memo, (word, idf)|
+            memo["wv_#{word}"] = ((datum.token_counts[word] || 0) / num_words)
+            memo
+          end
+        else
+          idfs[key].inject({}) do |memo, (word, idf)|
+            memo["wv_#{word}"] = ((datum.token_counts[word] || 0) / num_words) * idf
+            memo
+          end
         end
       end
     end

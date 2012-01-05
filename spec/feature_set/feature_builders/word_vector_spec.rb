@@ -39,7 +39,7 @@ describe FeatureSet::FeatureBuilders::WordVector do
                            }
   end
   
-  it "should allow specifying an word-count threshold" do
+  it "should allow specifying a word-count threshold" do
     builder = FeatureSet::FeatureBuilders::WordVector.new(:word_limit => 2)
     dataset = [{ :m1 => "hello world.  hello!", :class => true }] * 10
     dataset <<  { :m1 => "foo", :class => false }
@@ -61,5 +61,27 @@ describe FeatureSet::FeatureBuilders::WordVector do
     builder.idfs.should == {
                              :m1 => { "world" => Math.log(13/12.0) }
                            }
+  end
+  
+  it "should allow use of TF-only without IDF" do
+    builder = FeatureSet::FeatureBuilders::WordVector.new(:tf_only => true, :word_limit => 2)
+    dataset = [
+                { :m1 => "hello world.  hello!", :m2 => "how goes?", :class => :yes }, 
+                { :m1 => "foo world", :m2 => "how?", :class => :no },
+                { :m1 => "hello world!", :m2 => "how goes it?", :class => :no }
+              ]
+    wrapped_dataset = FeatureSet::DataSet.wrap_dataset(dataset)
+    builder.before_build_features(wrapped_dataset)
+
+    builder.idfs.should == {
+                             :m1 => { "hello" => 2, "world" => 3 },
+                             :m2 => { "how" => 3, "goes" => 2 }
+                           }
+
+    builder.build_features(wrapped_dataset.first[:m1], :m1, wrapped_dataset.first).should == { "wv_hello" => (2/3.0), "wv_world" => (1/3.0) }
+    builder.build_features(wrapped_dataset.first[:m2], :m2, wrapped_dataset.first).should == { "wv_how" => (1/2.0), "wv_goes" => (1/2.0) }
+
+    builder.build_features(wrapped_dataset[1][:m1], :m1, wrapped_dataset[1]).should == { "wv_hello" => 0, "wv_world" => (1/2.0) }
+    builder.build_features(wrapped_dataset[1][:m2], :m2, wrapped_dataset[1]).should == { "wv_how" => (1/1.0) , "wv_goes" => 0 }
   end
 end
