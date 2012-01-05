@@ -72,7 +72,7 @@ module FeatureSet
       end
     end
     
-    def build_features(opts = {})
+    def build_features_from_data!(opts = {})
       wrapped_data = self.class.wrap_dataset(data)
       feature_builders.each {|fb| fb.before_build_features(wrapped_data) }
       @features = build_features_for(wrapped_data, opts.merge(:already_wrapped => true))
@@ -80,8 +80,8 @@ module FeatureSet
 
     def build_features_for(data, opts = {})
       # FYI, we explicitly do not call before_build_features because this can be used on unknown rows for classification, and
-      # we want our feature generators to keep any cached data from the previous 'build_features' feature building call.  This is
-      # important for Wordvector, for example, since it needs to build the idf mappings beforehand and we want them used on any new data.
+      # we want our feature builders to keep any cached data from the previous 'build_features_from_data!' call.  This is important for
+      # Wordvector, for example, since it needs to build the idf mappings beforehand and needs to re-use them on any new data.
       wrapped_data = opts[:already_wrapped] ? data : self.class.wrap_dataset(data)
       wrapped_data.map.with_index do |row, index|
         output_row = {}
@@ -117,7 +117,18 @@ module FeatureSet
     end
     alias_method :add_feature_builder, :add_feature_builders
     
+    
+    def dump_feature_builders
+      Marshal.dump(feature_builders)
+    end
+    
+    def load_feature_builders(serialized_builders)
+      clear_features
+      self.feature_builders = Marshal.load(serialized_builders)
+    end
+    
     def self.wrap_dataset(dataset)
+      dataset = [dataset] unless dataset.is_a?(Array)
       dataset.map { |row| row.inject({}) { |m, (k, v)| m[k] = (k == :class ? v : Datum.new(v)) ; m } }
     end
   end

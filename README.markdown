@@ -14,14 +14,23 @@ FeatureSet is extensible, so anyone can write new FeatureBuilders that know to w
 
 ## Example Code
 
-    builder = FeatureSet::DataSet.new
-    builder.add_feature_builder FeatureSet::FeatureBuilders::WordVector.new(:word_limit => 2000, :idf_cutoff => 8.0)
-    builder.add_feature_builder FeatureSet::FeatureBuilders::Cuss.new
-    builder.add_data :status => "This is a spam email", :class => :spam
-    builder.add_data :status => "This is a not spam", :class => :not_spam
-    builder.build_features(:include_original => false) #do not include :status as it's own column in the output
+    data_set = FeatureSet::DataSet.new
+    data_set.add_feature_builder FeatureSet::FeatureBuilders::WordVector.new(:word_limit => 2000, :idf_cutoff => 8.0)
+    data_set.add_feature_builder FeatureSet::FeatureBuilders::Cuss.new
+    data_set.add_data :status => "This is a spam email", :class => :spam
+    data_set.add_data :status => "This is a not spam", :class => :not_spam
+    data_set.build_features_from_data!(:include_original => false) #do not include :status as it's own column in the output
 
     # The following ARFF can be imported into Weka
-    puts builder.to_rarff.to_s
+    puts data_set.to_rarff.to_s
+
+    serialized_builders = data_set.dump_feature_builders
+    
+    ... later ...
+
+    data_set = FeatureSet::DataSet.new
+    data_set.load_feature_builders(serialized_builders)
+    features = data_set.build_features_for({ :status => "Is this spam?" })
+    
 
 See the specs for more usage examples.

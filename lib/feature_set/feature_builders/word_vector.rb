@@ -11,6 +11,7 @@ module FeatureSet
       #   :word_limit => <word limit>, default is 2000
       def initialize(options = {})
         super
+        @idfs = {}
       end
 
       def before_build_features(dataset)
@@ -64,13 +65,16 @@ module FeatureSet
       def build_features(datum, key, row)
         return {} unless datum.value.is_a?(String)
         num_words = datum.tokens.length.to_f
+        unless idfs[key]
+          STDERR.puts "WARNING: build_features called on untrained data in WordVector.  Are you calling 'data_set.build_features_for' without calling 'data_set.build_features_from_data!' first?"
+        end
         if options[:tf_only]
-          idfs[key].inject({}) do |memo, (word, idf)|
+          (idfs[key] || {}).inject({}) do |memo, (word, idf)|
             memo["wv_#{word}"] = ((datum.token_counts[word] || 0) / num_words)
             memo
           end
         else
-          idfs[key].inject({}) do |memo, (word, idf)|
+          (idfs[key] || {}).inject({}) do |memo, (word, idf)|
             memo["wv_#{word}"] = ((datum.token_counts[word] || 0) / num_words) * idf
             memo
           end
