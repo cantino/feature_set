@@ -1,17 +1,17 @@
 require 'active_support'
 require 'active_support/inflector'
 
-require "feature_set/feature_builder/word_vector"
-require "feature_set/feature_builder/cuss"
-require "feature_set/feature_builder/emoticon"
+require "feature_set/feature_builders/word_vector"
+require "feature_set/feature_builders/cuss"
+require "feature_set/feature_builders/emoticon"
 
 require "feature_set/datum"
 
 module FeatureSet
-  class Builder
-    BUILTIN_FEATURE_BUILDERS = %w[FeatureSet::FeatureBuilder::Cuss 
-                                  FeatureSet::FeatureBuilder::Emoticon
-                                  FeatureSet::FeatureBuilder::WordVector].map(&:constantize)
+  class DataSet
+    BUILTIN_FEATURE_BUILDERS = %w[FeatureSet::FeatureBuilders::Cuss 
+                                  FeatureSet::FeatureBuilders::Emoticon
+                                  FeatureSet::FeatureBuilders::WordVector].map(&:constantize)
 
     attr_accessor :options, :feature_builders, :data, :features, :name
 
@@ -72,15 +72,15 @@ module FeatureSet
       end
     end
     
-    def generate_features(opts = {})
+    def build_features(opts = {})
       wrapped_data = self.class.wrap_dataset(data)
-      feature_builders.each {|fb| fb.before_generate_features(wrapped_data) }
-      @features = generate_features_for(wrapped_data, opts.merge(:already_wrapped => true))
+      feature_builders.each {|fb| fb.before_build_features(wrapped_data) }
+      @features = build_features_for(wrapped_data, opts.merge(:already_wrapped => true))
     end
 
-    def generate_features_for(data, opts = {})
-      # FYI, we explicitly do not call before_generate_features because this can be used on unknown rows for classification, and
-      # we want our feature generators to keep any cached data from the previous 'generate_features' feature building call.  This is
+    def build_features_for(data, opts = {})
+      # FYI, we explicitly do not call before_build_features because this can be used on unknown rows for classification, and
+      # we want our feature generators to keep any cached data from the previous 'build_features' feature building call.  This is
       # important for Wordvector, for example, since it needs to build the idf mappings beforehand and we want them used on any new data.
       wrapped_data = opts[:already_wrapped] ? data : self.class.wrap_dataset(data)
       wrapped_data.map.with_index do |row, index|
@@ -97,7 +97,7 @@ module FeatureSet
           end
 
           feature_builders.each do |builder|
-            builder.generate_features(datum, key, row).each do |feature, value|
+            builder.build_features(datum, key, row).each do |feature, value|
               output_row["#{key}_#{feature}".to_sym] = value
             end
           end

@@ -1,7 +1,7 @@
-require "feature_set/feature_builder/base"
+require "feature_set/feature_builders/base"
 
 module FeatureSet
-  module FeatureBuilder
+  module FeatureBuilders
     class WordVector < Base
       attr_accessor :idfs
 
@@ -9,7 +9,7 @@ module FeatureSet
         super
       end
 
-      def before_generate_features(dataset)
+      def before_build_features(dataset)
         @idfs = {}
         dataset.each do |row|
           row.each do |key, datum|
@@ -47,7 +47,7 @@ module FeatureSet
         end
       end
       
-      def generate_features(datum, key, row)
+      def build_features(datum, key, row)
         return {} unless datum.value.is_a?(String)
         num_words = datum.tokens.length.to_f
         idfs[key].inject({}) do |memo, (word, idf)|
