@@ -1,7 +1,7 @@
 module FeatureSet
   class Datum
     TOKEN_REGEX = /[\s\/]+/
-    NON_ASCII_REGEX = /[^a-zA-Z0-9_-]/
+    NON_ASCII_REGEX = /[^a-zA-Z0-9_\-\']/
     
     attr_accessor :value
     
@@ -11,7 +11,7 @@ module FeatureSet
     
     def tokens
       @tokens ||= begin
-        value.strip.downcase.gsub(NON_ASCII_REGEX, ' ').split(TOKEN_REGEX)
+        value.strip.gsub(/^['"]/, '').gsub(/["']$/, '').downcase.gsub(NON_ASCII_REGEX, ' ').split(TOKEN_REGEX).reject {|t| t.blank? }
       end
     end
     

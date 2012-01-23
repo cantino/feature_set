@@ -34,6 +34,15 @@ module FeatureSet
     def clear_features
       @features = []
     end
+    
+    def to_csv
+      output = []
+      features.each do |feature|
+        output << feature.values.join(', ')
+      end
+      
+      output.join("\n")
+    end
 
     def to_rarff
       relation = Rarff::Relation.new(name || 'Data')
