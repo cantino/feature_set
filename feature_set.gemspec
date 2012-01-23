@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
 
   # specify any dependencies here; for example:
   s.add_development_dependency "rspec"
-  s.add_runtime_dependency "wwood-rarff"
+  s.add_runtime_dependency "iterationlabs-rarff"
   s.add_runtime_dependency "activesupport"
   s.add_runtime_dependency "i18n"
 end
