@@ -1,6 +1,3 @@
-require 'active_support'
-require 'active_support/inflector'
-
 require "feature_set/feature_builders/word_vector"
 require "feature_set/feature_builders/cuss"
 require "feature_set/feature_builders/emoticon"
@@ -9,9 +6,9 @@ require "feature_set/datum"
 
 module FeatureSet
   class DataSet
-    BUILTIN_FEATURE_BUILDERS = %w[FeatureSet::FeatureBuilders::Cuss 
-                                  FeatureSet::FeatureBuilders::Emoticon
-                                  FeatureSet::FeatureBuilders::WordVector].map(&:constantize)
+    BUILTIN_FEATURE_BUILDERS = [FeatureSet::FeatureBuilders::Cuss,
+                                FeatureSet::FeatureBuilders::Emoticon,
+                                FeatureSet::FeatureBuilders::WordVector]
 
     attr_accessor :options, :feature_builders, :data, :features, :name
 
@@ -22,25 +19,25 @@ module FeatureSet
       @features = []
       @data = []
     end
-    
+
     def add_data(data)
       (@data << data).flatten!
     end
-    
+
     def clear_data
       @data = []
     end
-    
+
     def clear_features
       @features = []
     end
-    
+
     def to_csv
       output = []
       features.each do |feature|
         output << feature.values.join(', ')
       end
-      
+
       output.join("\n")
     end
 
@@ -65,7 +62,7 @@ module FeatureSet
       end
       relation
     end
-    
+
     # This only knows how to output arfs with true/false classes and all numeric attributes.
     # Additionally, every row must have the same attributes.
     def output_numeric_arff(io)
@@ -80,7 +77,7 @@ module FeatureSet
         io.puts keys.map { |k| k == :class ? feature[k].to_s : feature[k].to_f }.join(",")
       end
     end
-    
+
     def build_features_from_data!(opts = {})
       wrapped_data = self.class.wrap_dataset(data)
       feature_builders.each {|fb| fb.before_build_features(wrapped_data) }
@@ -94,13 +91,13 @@ module FeatureSet
       wrapped_data = opts[:already_wrapped] ? data : self.class.wrap_dataset(data)
       wrapped_data.map.with_index do |row, index|
         output_row = {}
-        
+
         row.each do |key, datum|
           if key == :class
             output_row[:class] = datum
             next
           end
-          
+
           if opts[:include_original] && (opts[:include_original].is_a?(TrueClass) || ![opts[:include_original][:except]].flatten.include?(key))
             output_row[key] = datum.value
           end
@@ -111,11 +108,11 @@ module FeatureSet
             end
           end
         end
-        
+
         if index % 10 == 0
           STDERR.print "."; STDERR.flush
         end
-        
+
         output_row
       end
     end
@@ -125,17 +122,17 @@ module FeatureSet
       (@feature_builders << builders).flatten!
     end
     alias_method :add_feature_builder, :add_feature_builders
-    
-    
+
+
     def dump_feature_builders
       Marshal.dump(feature_builders)
     end
-    
+
     def load_feature_builders(serialized_builders)
       clear_features
       self.feature_builders = Marshal.load(serialized_builders)
     end
-    
+
     def self.wrap_dataset(dataset)
       dataset = [dataset] unless dataset.is_a?(Array)
       dataset.map { |row| row.inject({}) { |m, (k, v)| m[k] = (k == :class ? v : Datum.new(v)) ; m } }
