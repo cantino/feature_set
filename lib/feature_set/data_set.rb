@@ -10,10 +10,11 @@ module FeatureSet
                                 FeatureSet::FeatureBuilders::Emoticon,
                                 FeatureSet::FeatureBuilders::WordVector]
 
-    attr_accessor :options, :feature_builders, :data, :features, :name
+    attr_accessor :options, :feature_builders, :data, :features, :name, :verbose
 
     def initialize(options = {})
       @options = options
+      @verbose = options[:verbose]
       @name = options[:name]
       @feature_builders = []
       @features = []
@@ -80,14 +81,19 @@ module FeatureSet
 
     def build_features_from_data!(opts = {})
       wrapped_data = self.class.wrap_dataset(data)
-      feature_builders.each {|fb| fb.before_build_features(wrapped_data) }
+      trigger_before_build_features(wrapped_data)
       @features = build_features_for(wrapped_data, opts.merge(:already_wrapped => true))
     end
 
+    def trigger_before_build_features(wrapped_data)
+      feature_builders.each {|fb| fb.before_build_features(wrapped_data) }
+    end
+
     def build_features_for(data, opts = {})
-      # FYI, we explicitly do not call before_build_features because this can be used on unknown rows for classification, and
-      # we want our feature builders to keep any cached data from the previous 'build_features_from_data!' call.  This is important for
-      # Wordvector, for example, since it needs to build the idf mappings beforehand and needs to re-use them on any new data.
+      # We explicitly do not call before_build_features here because build_features_for is intended to be used on
+      # unknown rows for classification.  We want our feature builders to keep any cached data from
+      # the previous 'build_features_from_data!' call.  This is important for Wordvector, for example,
+      # since it needs to build the idf mappings beforehand and needs to re-use them on any new data.
       wrapped_data = opts[:already_wrapped] ? data : self.class.wrap_dataset(data)
       wrapped_data.map.with_index do |row, index|
         output_row = {}
@@ -109,7 +115,7 @@ module FeatureSet
           end
         end
 
-        if index % 10 == 0
+        if verbose && index % 10 == 0
           STDERR.print "."; STDERR.flush
         end
 
@@ -119,10 +125,12 @@ module FeatureSet
 
     def add_feature_builders(*builders)
       builders = BUILTIN_FEATURE_BUILDERS.map(&:new) if [:all, "all"].include?(builders.first)
-      (@feature_builders << builders).flatten!
+      builders.each do |builder|
+        builder.data_set = self
+        @feature_builders << builder
+      end
     end
     alias_method :add_feature_builder, :add_feature_builders
-
 
     def dump_feature_builders
       Marshal.dump(feature_builders)
